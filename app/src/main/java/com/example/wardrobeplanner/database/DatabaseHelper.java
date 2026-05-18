@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.example.wardrobeplanner.models.ClothingItem;
+import com.example.wardrobeplanner.models.Outfit;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitEntry;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitClothingEntry;
 
@@ -103,6 +104,110 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return itemList;
+    }
+
+    public long addOutfit(String outfitName, List<Integer> clothingIds) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            ContentValues outfitValues = new ContentValues();
+            outfitValues.put(OutfitEntry.COLUMN_OUTFIT_NAME, outfitName);
+
+            long outfitId = db.insert(OutfitEntry.TABLE_NAME, null, outfitValues);
+            if (outfitId == -1) {
+                return -1;
+            }
+
+            for (Integer clothingId : clothingIds) {
+                ContentValues linkValues = new ContentValues();
+                linkValues.put(OutfitClothingEntry.COLUMN_OUTFIT_ID, outfitId);
+                linkValues.put(OutfitClothingEntry.COLUMN_CLOTHING_ID, clothingId);
+                db.insert(OutfitClothingEntry.TABLE_NAME, null, linkValues);
+            }
+
+            db.setTransactionSuccessful();
+            return outfitId;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public List<Outfit> getAllOutfits() {
+        List<Outfit> outfits = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(
+                OutfitEntry.TABLE_NAME,
+                null,
+                null,
+                null,
+                null,
+                null,
+                OutfitEntry._ID + " DESC"
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                int outfitId = cursor.getInt(cursor.getColumnIndexOrThrow(OutfitEntry._ID));
+                String outfitName = cursor.getString(cursor.getColumnIndexOrThrow(OutfitEntry.COLUMN_OUTFIT_NAME));
+                outfits.add(new Outfit(outfitId, outfitName, getClothingItemsForOutfit(outfitId)));
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return outfits;
+    }
+
+    public List<ClothingItem> getClothingItemsForOutfit(int outfitId) {
+        List<ClothingItem> itemList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String query = "SELECT c.* FROM " + ClothingEntry.TABLE_NAME + " c " +
+                "INNER JOIN " + OutfitClothingEntry.TABLE_NAME + " oc " +
+                "ON c." + ClothingEntry._ID + " = oc." + OutfitClothingEntry.COLUMN_CLOTHING_ID + " " +
+                "WHERE oc." + OutfitClothingEntry.COLUMN_OUTFIT_ID + " = ?";
+
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(outfitId)});
+
+        if (cursor.moveToFirst()) {
+            do {
+                ClothingItem item = new ClothingItem(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ClothingEntry._ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_CATEGORY)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_IMAGE_URI)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_SEASON)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_COLOR)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION))
+                );
+                itemList.add(item);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        return itemList;
+    }
+
+    public void deleteOutfit(int outfitId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            db.delete(
+                    OutfitClothingEntry.TABLE_NAME,
+                    OutfitClothingEntry.COLUMN_OUTFIT_ID + " = ?",
+                    new String[]{String.valueOf(outfitId)}
+            );
+            db.delete(
+                    OutfitEntry.TABLE_NAME,
+                    OutfitEntry._ID + " = ?",
+                    new String[]{String.valueOf(outfitId)}
+            );
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
     }
 
 }

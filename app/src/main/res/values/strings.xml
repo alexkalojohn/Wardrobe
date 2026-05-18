@@ -24,4 +24,11 @@
     <string name="button_save_clothing">Save Clothing</string>
     <string name="label_name">Name</string>
     <string name="button_delete">Delete</string>
+    <string name="title_create_outfit">Create Outfit</string>
+    <string name="title_outfit_list">Outfits</string>
+    <string name="hint_outfit_name">Outfit Name</string>
+    <string name="label_top">Top</string>
+    <string name="label_bottom">Bottom</string>
+    <string name="label_shoes">Shoes</string>
+    <string name="button_save_outfit">Save Outfit</string>
 </resources>
