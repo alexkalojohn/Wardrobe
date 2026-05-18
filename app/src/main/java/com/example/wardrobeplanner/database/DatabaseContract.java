@@ -1,4 +1,4 @@
-package com.example.myapplication.database;
+package com.example.wardrobeplanner.database;
 
 import android.provider.BaseColumns;
 
@@ -12,6 +12,9 @@ public final class DatabaseContract {
         public static final String COLUMN_NAME = "name";
         public static final String COLUMN_CATEGORY = "category";
         public static final String COLUMN_IMAGE_URI = "image_uri";
+        public static final String COLUMN_SEASON = "season";
+        public static final String COLUMN_COLOR = "color";
+        public static final String COLUMN_DESCRIPTION = "description";
     }
 
     public static class OutfitEntry implements BaseColumns {

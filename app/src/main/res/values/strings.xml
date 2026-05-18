@@ -10,4 +10,18 @@
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
+
+    <string name="button_add_clothing">Add Clothing</string>
+    <string name="button_create_outfit">Create Outfit</string>
+    <string name="button_view_outfits">View Outfits</string>
+    <string name="hint_clothing_name">Clothing Name</string>
+    <string name="label_category">Category</string>
+    <string name="hint_color">Color</string>
+    <string name="label_season">Season</string>
+    <string name="hint_description">Description</string>
+    <string name="desc_clothing_image">Clothing image preview</string>
+    <string name="button_select_image">Select Image</string>
+    <string name="button_save_clothing">Save Clothing</string>
+    <string name="label_name">Name</string>
+    <string name="button_delete">Delete</string>
 </resources>
