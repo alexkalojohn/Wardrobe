@@ -22,6 +22,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".AddClothingActivity"
+            android:label="Add Clothing" />
+        <activity
+            android:name=".CreateOutfitActivity"
+            android:label="Create Outfit" />
+        <activity
+            android:name=".OutfitListActivity"
+            android:label="Outfits" />
+        <activity
+            android:name=".ClothingDetailsActivity"
+            android:label="Clothing Details" />
     </application>
 
 </manifest>
