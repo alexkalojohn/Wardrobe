@@ -70,6 +70,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <TextView
+            android:id="@+id/text_create_outfit_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorError"
+            android:visibility="gone" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_save_outfit"
             style="@style/Widget.Material3.Button"
