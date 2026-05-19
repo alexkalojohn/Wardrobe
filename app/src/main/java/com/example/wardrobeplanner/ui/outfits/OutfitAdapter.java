@@ -74,20 +74,31 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
             }
 
             binding.textOutfitItems.setVisibility(View.VISIBLE);
-            StringBuilder builder = new StringBuilder();
 
-            for (int i = 0; i < items.size(); i++) {
-                ClothingItem item = items.get(i);
-                builder.append(item.getName())
-                        .append(" - ")
-                        .append(item.getCategory());
+            ClothingItem top = findItemByCategory(items, "Top");
+            ClothingItem bottom = findItemByCategory(items, "Bottom");
+            ClothingItem shoes = findItemByCategory(items, "Shoes");
 
-                if (i < items.size() - 1) {
-                    builder.append("\n");
+            return "Top: " + getDisplayName(top) + "\n" +
+                    "Bottom: " + getDisplayName(bottom) + "\n" +
+                    "Shoes: " + getDisplayName(shoes);
+        }
+
+        private ClothingItem findItemByCategory(List<ClothingItem> items, String category) {
+            for (ClothingItem item : items) {
+                if (category.equalsIgnoreCase(item.getCategory())) {
+                    return item;
                 }
             }
+            return null;
+        }
 
-            return builder.toString();
+        private String getDisplayName(ClothingItem item) {
+            if (item == null) {
+                return "Not selected";
+            }
+
+            return item.getName();
         }
     }
 }
