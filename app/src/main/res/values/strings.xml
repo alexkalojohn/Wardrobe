@@ -31,4 +31,8 @@
     <string name="label_bottom">Bottom</string>
     <string name="label_shoes">Shoes</string>
     <string name="button_save_outfit">Save Outfit</string>
+    <string name="empty_outfits">No outfits yet. Create your first outfit.</string>
+    <string name="error_missing_top">Add at least one Top item first.</string>
+    <string name="error_missing_bottom">Add at least one Bottom item first.</string>
+    <string name="error_missing_shoes">Add at least one Shoes item first.</string>
 </resources>

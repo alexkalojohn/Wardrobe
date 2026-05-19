@@ -1,6 +1,7 @@
 package com.example.wardrobeplanner;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -18,7 +19,9 @@ public class CreateOutfitActivity extends AppCompatActivity {
 
     private ActivityCreateOutfitBinding binding;
     private DatabaseHelper databaseHelper;
-    private List<ClothingItem> clothingItems = new ArrayList<>();
+    private List<ClothingItem> topItems = new ArrayList<>();
+    private List<ClothingItem> bottomItems = new ArrayList<>();
+    private List<ClothingItem> shoesItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,11 +41,29 @@ public class CreateOutfitActivity extends AppCompatActivity {
     }
 
     private void setupClothingSpinners() {
-        clothingItems = databaseHelper.getAllClothing();
+        List<ClothingItem> clothingItems = databaseHelper.getAllClothing();
 
-        List<String> labels = new ArrayList<>();
         for (ClothingItem item : clothingItems) {
-            labels.add(item.getName() + " (" + item.getCategory() + ")");
+            String category = item.getCategory();
+            if ("Top".equalsIgnoreCase(category)) {
+                topItems.add(item);
+            } else if ("Bottom".equalsIgnoreCase(category)) {
+                bottomItems.add(item);
+            } else if ("Shoes".equalsIgnoreCase(category)) {
+                shoesItems.add(item);
+            }
+        }
+
+        binding.spinnerTop.setAdapter(createSpinnerAdapter(topItems));
+        binding.spinnerBottom.setAdapter(createSpinnerAdapter(bottomItems));
+        binding.spinnerShoes.setAdapter(createSpinnerAdapter(shoesItems));
+        updateRequirementMessage();
+    }
+
+    private ArrayAdapter<String> createSpinnerAdapter(List<ClothingItem> items) {
+        List<String> labels = new ArrayList<>();
+        for (ClothingItem item : items) {
+            labels.add(item.getName() + " (" + item.getColor() + ")");
         }
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -51,10 +72,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
                 labels
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-        binding.spinnerTop.setAdapter(adapter);
-        binding.spinnerBottom.setAdapter(adapter);
-        binding.spinnerShoes.setAdapter(adapter);
+        return adapter;
     }
 
     private void setupSaveButton() {
@@ -69,8 +87,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
             return;
         }
 
-        if (clothingItems.size() < 3) {
-            Toast.makeText(this, "Add at least three clothing items first", Toast.LENGTH_SHORT).show();
+        if (!hasRequiredCategories()) {
             return;
         }
 
@@ -84,9 +101,9 @@ public class CreateOutfitActivity extends AppCompatActivity {
         }
 
         List<Integer> clothingIds = Arrays.asList(
-                clothingItems.get(topPosition).getId(),
-                clothingItems.get(bottomPosition).getId(),
-                clothingItems.get(shoesPosition).getId()
+                topItems.get(topPosition).getId(),
+                bottomItems.get(bottomPosition).getId(),
+                shoesItems.get(shoesPosition).getId()
         );
 
         long outfitId = databaseHelper.addOutfit(outfitName, clothingIds);
@@ -97,5 +114,56 @@ public class CreateOutfitActivity extends AppCompatActivity {
 
         Toast.makeText(this, "Outfit saved", Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    private boolean hasRequiredCategories() {
+        if (topItems.isEmpty()) {
+            Toast.makeText(this, getString(R.string.error_missing_top), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (bottomItems.isEmpty()) {
+            Toast.makeText(this, getString(R.string.error_missing_bottom), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (shoesItems.isEmpty()) {
+            Toast.makeText(this, getString(R.string.error_missing_shoes), Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void updateRequirementMessage() {
+        StringBuilder message = new StringBuilder();
+
+        if (topItems.isEmpty()) {
+            message.append(getString(R.string.error_missing_top));
+        }
+
+        if (bottomItems.isEmpty()) {
+            appendMissingCategoryMessage(message, getString(R.string.error_missing_bottom));
+        }
+
+        if (shoesItems.isEmpty()) {
+            appendMissingCategoryMessage(message, getString(R.string.error_missing_shoes));
+        }
+
+        if (message.length() == 0) {
+            binding.textCreateOutfitState.setVisibility(View.GONE);
+            binding.buttonSaveOutfit.setEnabled(true);
+        } else {
+            binding.textCreateOutfitState.setText(message.toString());
+            binding.textCreateOutfitState.setVisibility(View.VISIBLE);
+            binding.buttonSaveOutfit.setEnabled(false);
+        }
+    }
+
+    private void appendMissingCategoryMessage(StringBuilder message, String nextMessage) {
+        if (message.length() > 0) {
+            message.append("\n");
+        }
+        message.append(nextMessage);
     }
 }
