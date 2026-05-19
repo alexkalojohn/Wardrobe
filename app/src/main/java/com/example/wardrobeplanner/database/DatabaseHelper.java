@@ -210,4 +210,131 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    /**
+     * Insert a clothing item into the database.
+     * @param clothingItem the item to insert
+     * @return true if insertion was successful, false otherwise
+     */
+    public boolean insertClothing(ClothingItem clothingItem) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(ClothingEntry.COLUMN_NAME, clothingItem.getName());
+        values.put(ClothingEntry.COLUMN_CATEGORY, clothingItem.getCategory());
+        values.put(ClothingEntry.COLUMN_COLOR, clothingItem.getColor());
+        values.put(ClothingEntry.COLUMN_SEASON, clothingItem.getSeason());
+        values.put(ClothingEntry.COLUMN_DESCRIPTION, clothingItem.getDescription());
+        values.put(ClothingEntry.COLUMN_IMAGE_URI, clothingItem.getImageUri());
+
+        long result = db.insert(ClothingEntry.TABLE_NAME, null, values);
+        return result != -1;
+    }
+
+    /**
+     * Retrieve all clothing items from the database.
+     * @return list of all ClothingItem objects
+     */
+    public List<ClothingItem> getAllClothes() {
+        List<ClothingItem> clothingList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] projection = {
+                ClothingEntry._ID,
+                ClothingEntry.COLUMN_NAME,
+                ClothingEntry.COLUMN_CATEGORY,
+                ClothingEntry.COLUMN_COLOR,
+                ClothingEntry.COLUMN_SEASON,
+                ClothingEntry.COLUMN_DESCRIPTION,
+                ClothingEntry.COLUMN_IMAGE_URI
+        };
+
+        Cursor cursor = db.query(
+                ClothingEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                ClothingItem item = new ClothingItem(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ClothingEntry._ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_CATEGORY)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_IMAGE_URI)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_SEASON)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_COLOR)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION))
+                );
+                clothingList.add(item);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return clothingList;
+    }
+
+    /**
+     * Delete a clothing item by its ID.
+     * @param id the clothing item ID
+     * @return the number of rows affected
+     */
+    public int deleteClothing(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String selection = ClothingEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(id) };
+        return db.delete(ClothingEntry.TABLE_NAME, selection, selectionArgs);
+    }
+
+    /**
+     * Retrieve a single clothing item by its ID.
+     * @param id the clothing item ID
+     * @return the ClothingItem object, or null if not found
+     */
+    public ClothingItem getClothingById(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String[] projection = {
+                ClothingEntry._ID,
+                ClothingEntry.COLUMN_NAME,
+                ClothingEntry.COLUMN_CATEGORY,
+                ClothingEntry.COLUMN_COLOR,
+                ClothingEntry.COLUMN_SEASON,
+                ClothingEntry.COLUMN_DESCRIPTION,
+                ClothingEntry.COLUMN_IMAGE_URI
+        };
+
+        String selection = ClothingEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(id) };
+
+        Cursor cursor = db.query(
+                ClothingEntry.TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        ClothingItem item = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            item = new ClothingItem(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(ClothingEntry._ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_NAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_CATEGORY)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_IMAGE_URI)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_SEASON)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_COLOR)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION))
+            );
+            cursor.close();
+        }
+
+        return item;
+    }
+
 }

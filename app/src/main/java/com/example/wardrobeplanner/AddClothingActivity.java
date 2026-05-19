@@ -11,11 +11,14 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.wardrobeplanner.database.DatabaseHelper;
 import com.example.wardrobeplanner.databinding.ActivityAddClothingBinding;
+import com.example.wardrobeplanner.models.ClothingItem;
 
 public class AddClothingActivity extends AppCompatActivity {
 
     private ActivityAddClothingBinding binding;
+    private DatabaseHelper databaseHelper;
     private String selectedCategory;
     private String selectedSeason;
     private String selectedImageUri = "";
@@ -36,6 +39,8 @@ public class AddClothingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityAddClothingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        databaseHelper = new DatabaseHelper(this);
 
         setupCategorySpinner();
         setupSeasonSpinner();
@@ -124,19 +129,28 @@ public class AddClothingActivity extends AppCompatActivity {
                 binding.edittextColor.setError(null);
             }
 
-            if (description.isEmpty()) {
-                binding.edittextDescription.setError("Description cannot be empty");
-                isValid = false;
-            } else {
-                binding.edittextDescription.setError(null);
-            }
-
             if (!isValid) {
                 return;
             }
 
-            // TODO: Implement database insertion
-            android.widget.Toast.makeText(this, "Clothing item ready to save", android.widget.Toast.LENGTH_SHORT).show();
+            ClothingItem clothingItem = new ClothingItem(
+                    0,
+                    name,
+                    selectedCategory,
+                    selectedImageUri,
+                    selectedSeason,
+                    color,
+                    description
+            );
+
+            boolean success = databaseHelper.insertClothing(clothingItem);
+
+            if (success) {
+                android.widget.Toast.makeText(this, "Clothing item saved", android.widget.Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                android.widget.Toast.makeText(this, "Failed to save clothing item", android.widget.Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }
