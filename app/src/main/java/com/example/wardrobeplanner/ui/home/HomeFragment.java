@@ -14,26 +14,36 @@ import com.example.wardrobeplanner.AddClothingActivity;
 import com.example.wardrobeplanner.ClothingDetailsActivity;
 import com.example.wardrobeplanner.CreateOutfitActivity;
 import com.example.wardrobeplanner.OutfitListActivity;
+import com.example.wardrobeplanner.database.DatabaseHelper;
 import com.example.wardrobeplanner.databinding.FragmentHomeBinding;
 import com.example.wardrobeplanner.models.ClothingItem;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
     private ClothingAdapter adapter;
+    private DatabaseHelper databaseHelper;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
+        databaseHelper = new DatabaseHelper(requireContext());
+
         setupRecyclerView();
         setupButtons();
+        loadClothingItems();
 
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadClothingItems();
     }
 
     @Override
@@ -44,7 +54,6 @@ public class HomeFragment extends Fragment {
 
     private void setupRecyclerView() {
         adapter = new ClothingAdapter();
-        adapter.setItems(getMockClothingItems());
         adapter.setOnItemClickListener((item, position) -> {
             Intent intent = new Intent(requireContext(), ClothingDetailsActivity.class);
             intent.putExtra(ClothingDetailsActivity.EXTRA_CLOTHING_ID, item.getId());
@@ -60,15 +69,20 @@ public class HomeFragment extends Fragment {
         binding.recyclerClothing.setAdapter(adapter);
     }
 
-    private List<ClothingItem> getMockClothingItems() {
-        List<ClothingItem> items = new ArrayList<>();
-        items.add(new ClothingItem(1, "Blue Denim Jacket", "Jacket", "no_path", "Autumn", "Blue", "Classic denim jacket for casual wear"));
-        items.add(new ClothingItem(2, "White Cotton T-Shirt", "Top", "no_path", "Summer", "White", "Breathable cotton tee"));
-        items.add(new ClothingItem(3, "Black Slim Chinos", "Bottom", "no_path", "Spring", "Black", "Versatile slim-fit chinos"));
-        items.add(new ClothingItem(4, "Leather Winter Boots", "Shoes", "no_path", "Winter", "Brown", "Waterproof leather boots"));
-        items.add(new ClothingItem(5, "Red Wool Sweater", "Top", "no_path", "Winter", "Red", "Cozy wool knit sweater"));
-        items.add(new ClothingItem(6, "Beige Linen Shorts", "Bottom", "no_path", "Summer", "Beige", "Lightweight linen shorts"));
-        return items;
+    private void loadClothingItems() {
+        List<ClothingItem> items = databaseHelper.getAllClothes();
+        adapter.setItems(items);
+        updateEmptyState(items);
+    }
+
+    private void updateEmptyState(List<ClothingItem> items) {
+        if (items == null || items.isEmpty()) {
+            binding.recyclerClothing.setVisibility(View.GONE);
+            binding.textEmptyState.setVisibility(View.VISIBLE);
+        } else {
+            binding.recyclerClothing.setVisibility(View.VISIBLE);
+            binding.textEmptyState.setVisibility(View.GONE);
+        }
     }
 
     private void setupButtons() {

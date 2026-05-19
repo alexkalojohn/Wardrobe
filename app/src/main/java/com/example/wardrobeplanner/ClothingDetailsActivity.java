@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.wardrobeplanner.database.DatabaseHelper;
 import com.example.wardrobeplanner.databinding.ActivityClothingDetailsBinding;
 
 import java.io.File;
@@ -22,6 +23,7 @@ public class ClothingDetailsActivity extends AppCompatActivity {
     public static final String EXTRA_CLOTHING_IMAGE_URI = "extra_clothing_image_uri";
 
     private ActivityClothingDetailsBinding binding;
+    private DatabaseHelper databaseHelper;
     private int clothingId = -1;
 
     @Override
@@ -29,6 +31,8 @@ public class ClothingDetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityClothingDetailsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        databaseHelper = new DatabaseHelper(this);
 
         clothingId = getIntent().getIntExtra(EXTRA_CLOTHING_ID, -1);
         String name = getIntent().getStringExtra(EXTRA_CLOTHING_NAME);
@@ -46,8 +50,15 @@ public class ClothingDetailsActivity extends AppCompatActivity {
         populateText(binding.textValueDescription, description);
 
         binding.buttonDeleteClothing.setOnClickListener(v -> {
-            // TODO: Implement delete database logic
-            Toast.makeText(this, "Delete requested for item " + clothingId, Toast.LENGTH_SHORT).show();
+            if (clothingId != -1) {
+                int rowsDeleted = databaseHelper.deleteClothing(clothingId);
+                if (rowsDeleted > 0) {
+                    Toast.makeText(this, "Clothing item deleted", Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    Toast.makeText(this, "Failed to delete clothing item", Toast.LENGTH_SHORT).show();
+                }
+            }
         });
     }
 
