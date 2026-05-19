@@ -29,6 +29,19 @@
         app:layout_constraintTop_toBottomOf="@id/text_outfit_list_title"
         tools:listitem="@layout/item_outfit" />
 
+    <TextView
+        android:id="@+id/text_empty_outfits"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/empty_outfits"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/button_new_outfit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_outfit_list_title" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_new_outfit"
         style="@style/Widget.Material3.Button"

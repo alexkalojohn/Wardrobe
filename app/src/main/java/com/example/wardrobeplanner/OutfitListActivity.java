@@ -2,6 +2,7 @@ package com.example.wardrobeplanner;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -61,5 +62,12 @@ public class OutfitListActivity extends AppCompatActivity {
         outfits.clear();
         outfits.addAll(databaseHelper.getAllOutfits());
         outfitAdapter.notifyDataSetChanged();
+        updateEmptyState();
+    }
+
+    private void updateEmptyState() {
+        boolean isEmpty = outfits.isEmpty();
+        binding.textEmptyOutfits.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        binding.recyclerOutfits.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 }
