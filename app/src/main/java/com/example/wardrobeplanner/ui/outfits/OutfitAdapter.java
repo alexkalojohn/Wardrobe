@@ -95,7 +95,7 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
 
         private String getDisplayName(ClothingItem item) {
             if (item == null) {
-                return "Not selected";
+                return "Deleted item";
             }
 
             return item.getName();

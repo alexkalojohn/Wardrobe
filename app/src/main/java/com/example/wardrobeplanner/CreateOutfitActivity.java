@@ -1,7 +1,10 @@
 package com.example.wardrobeplanner;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
@@ -13,6 +16,7 @@ import com.example.wardrobeplanner.models.ClothingItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class CreateOutfitActivity extends AppCompatActivity {
@@ -32,6 +36,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
         databaseHelper = new DatabaseHelper(this);
         setupClothingSpinners();
         setupSaveButton();
+        updateFormState();
     }
 
     @Override
@@ -54,14 +59,29 @@ public class CreateOutfitActivity extends AppCompatActivity {
             }
         }
 
-        binding.spinnerTop.setAdapter(createSpinnerAdapter(topItems));
-        binding.spinnerBottom.setAdapter(createSpinnerAdapter(bottomItems));
-        binding.spinnerShoes.setAdapter(createSpinnerAdapter(shoesItems));
-        updateRequirementMessage();
+        sortItemsByName(topItems);
+        sortItemsByName(bottomItems);
+        sortItemsByName(shoesItems);
+
+        binding.spinnerTop.setAdapter(createSpinnerAdapter(topItems, getString(R.string.select_top)));
+        binding.spinnerBottom.setAdapter(createSpinnerAdapter(bottomItems, getString(R.string.select_bottom)));
+        binding.spinnerShoes.setAdapter(createSpinnerAdapter(shoesItems, getString(R.string.select_shoes)));
+        setupSpinnerListeners();
     }
 
-    private ArrayAdapter<String> createSpinnerAdapter(List<ClothingItem> items) {
+    private void sortItemsByName(List<ClothingItem> items) {
+        items.sort(Comparator
+                .comparing((ClothingItem item) -> safeText(item.getName()), String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(item -> safeText(item.getColor()), String.CASE_INSENSITIVE_ORDER));
+    }
+
+    private String safeText(String value) {
+        return value == null ? "" : value;
+    }
+
+    private ArrayAdapter<String> createSpinnerAdapter(List<ClothingItem> items, String selectionPrompt) {
         List<String> labels = new ArrayList<>();
+        labels.add(selectionPrompt);
         for (ClothingItem item : items) {
             labels.add(item.getName() + " (" + item.getColor() + ")");
         }
@@ -70,40 +90,73 @@ public class CreateOutfitActivity extends AppCompatActivity {
                 this,
                 android.R.layout.simple_spinner_item,
                 labels
-        );
+        ) {
+            @Override
+            public boolean isEnabled(int position) {
+                return position != 0;
+            }
+        };
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         return adapter;
     }
 
     private void setupSaveButton() {
+        binding.edittextOutfitName.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No action needed.
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateFormState();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No action needed.
+            }
+        });
+
         binding.buttonSaveOutfit.setOnClickListener(v -> saveOutfit());
+    }
+
+    private void setupSpinnerListeners() {
+        AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                updateFormState();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                updateFormState();
+            }
+        };
+
+        binding.spinnerTop.setOnItemSelectedListener(listener);
+        binding.spinnerBottom.setOnItemSelectedListener(listener);
+        binding.spinnerShoes.setOnItemSelectedListener(listener);
     }
 
     private void saveOutfit() {
         String outfitName = binding.edittextOutfitName.getText().toString().trim();
 
         if (outfitName.isEmpty()) {
-            binding.edittextOutfitName.setError("Outfit name cannot be empty");
+            binding.edittextOutfitName.setError(getString(R.string.error_empty_outfit_name));
+            updateFormState();
             return;
         }
 
-        if (!hasRequiredCategories()) {
-            return;
-        }
-
-        int topPosition = binding.spinnerTop.getSelectedItemPosition();
-        int bottomPosition = binding.spinnerBottom.getSelectedItemPosition();
-        int shoesPosition = binding.spinnerShoes.getSelectedItemPosition();
-
-        if (topPosition < 0 || bottomPosition < 0 || shoesPosition < 0) {
-            Toast.makeText(this, "Select all outfit items", Toast.LENGTH_SHORT).show();
+        if (!hasRequiredCategories() || !hasSelectedAllCategories()) {
+            updateFormState();
             return;
         }
 
         List<Integer> clothingIds = Arrays.asList(
-                topItems.get(topPosition).getId(),
-                bottomItems.get(bottomPosition).getId(),
-                shoesItems.get(shoesPosition).getId()
+                topItems.get(binding.spinnerTop.getSelectedItemPosition() - 1).getId(),
+                bottomItems.get(binding.spinnerBottom.getSelectedItemPosition() - 1).getId(),
+                shoesItems.get(binding.spinnerShoes.getSelectedItemPosition() - 1).getId()
         );
 
         long outfitId = databaseHelper.addOutfit(outfitName, clothingIds);
@@ -114,6 +167,12 @@ public class CreateOutfitActivity extends AppCompatActivity {
 
         Toast.makeText(this, "Outfit saved", Toast.LENGTH_SHORT).show();
         finish();
+    }
+
+    private boolean hasSelectedAllCategories() {
+        return binding.spinnerTop.getSelectedItemPosition() > 0
+                && binding.spinnerBottom.getSelectedItemPosition() > 0
+                && binding.spinnerShoes.getSelectedItemPosition() > 0;
     }
 
     private boolean hasRequiredCategories() {
@@ -135,19 +194,30 @@ public class CreateOutfitActivity extends AppCompatActivity {
         return true;
     }
 
-    private void updateRequirementMessage() {
+    private void updateFormState() {
         StringBuilder message = new StringBuilder();
+        String outfitName = binding.edittextOutfitName.getText().toString().trim();
 
         if (topItems.isEmpty()) {
             message.append(getString(R.string.error_missing_top));
+        } else if (binding.spinnerTop.getSelectedItemPosition() == 0) {
+            message.append(getString(R.string.error_select_top));
         }
 
         if (bottomItems.isEmpty()) {
             appendMissingCategoryMessage(message, getString(R.string.error_missing_bottom));
+        } else if (binding.spinnerBottom.getSelectedItemPosition() == 0) {
+            appendMissingCategoryMessage(message, getString(R.string.error_select_bottom));
         }
 
         if (shoesItems.isEmpty()) {
             appendMissingCategoryMessage(message, getString(R.string.error_missing_shoes));
+        } else if (binding.spinnerShoes.getSelectedItemPosition() == 0) {
+            appendMissingCategoryMessage(message, getString(R.string.error_select_shoes));
+        }
+
+        if (outfitName.isEmpty()) {
+            appendMissingCategoryMessage(message, getString(R.string.error_empty_outfit_name));
         }
 
         if (message.length() == 0) {

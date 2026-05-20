@@ -1,6 +1,5 @@
 package com.example.wardrobeplanner;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -39,11 +38,6 @@ public class OutfitListActivity extends AppCompatActivity {
 
         binding.recyclerOutfits.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerOutfits.setAdapter(outfitAdapter);
-
-        binding.buttonNewOutfit.setOnClickListener(v -> {
-            Intent intent = new Intent(this, CreateOutfitActivity.class);
-            startActivity(intent);
-        });
     }
 
     @Override
