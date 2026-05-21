@@ -290,6 +290,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /**
+     * Update an existing clothing item.
+     * @param clothingItem the item to update (must have valid id)
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateClothing(ClothingItem clothingItem) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(ClothingEntry.COLUMN_NAME, clothingItem.getName());
+        values.put(ClothingEntry.COLUMN_CATEGORY, clothingItem.getCategory());
+        values.put(ClothingEntry.COLUMN_COLOR, clothingItem.getColor());
+        values.put(ClothingEntry.COLUMN_SEASON, clothingItem.getSeason());
+        values.put(ClothingEntry.COLUMN_DESCRIPTION, clothingItem.getDescription());
+        values.put(ClothingEntry.COLUMN_IMAGE_URI, clothingItem.getImageUri());
+
+        String selection = ClothingEntry._ID + " = ?";
+        String[] selectionArgs = { String.valueOf(clothingItem.getId()) };
+
+        int count = db.update(ClothingEntry.TABLE_NAME, values, selection, selectionArgs);
+        return count > 0;
+    }
+
+    /**
      * Retrieve a single clothing item by its ID.
      * @param id the clothing item ID
      * @return the ClothingItem object, or null if not found

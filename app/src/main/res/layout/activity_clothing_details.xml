@@ -140,15 +140,31 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_delete_clothing"
-            style="@style/Widget.Material3.Button"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:backgroundTint="?attr/colorError"
-            android:text="@string/button_delete"
-            android:textColor="?attr/colorOnError" />
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_edit_clothing"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="@string/button_edit" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_delete_clothing"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:backgroundTint="?attr/colorError"
+                android:text="@string/button_delete"
+                android:textColor="?attr/colorOnError" />
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

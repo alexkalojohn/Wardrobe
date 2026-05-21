@@ -38,7 +38,7 @@ public class HomeFragment extends Fragment {
         loadClothingItems();
 
         return root;
-    }
+    }   
 
     @Override
     public void onResume() {

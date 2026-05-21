@@ -1,5 +1,6 @@
 package com.example.wardrobeplanner;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -59,6 +60,19 @@ public class ClothingDetailsActivity extends AppCompatActivity {
                     Toast.makeText(this, "Failed to delete clothing item", Toast.LENGTH_SHORT).show();
                 }
             }
+        });
+
+        binding.buttonEditClothing.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AddClothingActivity.class);
+            intent.putExtra(AddClothingActivity.EXTRA_EDIT_MODE, true);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_ID, clothingId);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_NAME, name);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_CATEGORY, category);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_COLOR, color);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_SEASON, season);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_DESCRIPTION, description);
+            intent.putExtra(AddClothingActivity.EXTRA_CLOTHING_IMAGE_URI, imageUri);
+            startActivity(intent);
         });
     }
 

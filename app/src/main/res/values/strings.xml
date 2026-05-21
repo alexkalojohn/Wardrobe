@@ -23,6 +23,7 @@
     <string name="button_select_image">Select Image</string>
     <string name="button_save_clothing">Save Clothing</string>
     <string name="label_name">Name</string>
+    <string name="button_edit">Edit</string>
     <string name="button_delete">Delete</string>
     <string name="empty_clothing_message">No clothing items added yet</string>
     <string name="title_create_outfit">Create Outfit</string>

@@ -17,11 +17,22 @@ import com.example.wardrobeplanner.models.ClothingItem;
 
 public class AddClothingActivity extends AppCompatActivity {
 
+    public static final String EXTRA_EDIT_MODE = "extra_edit_mode";
+    public static final String EXTRA_CLOTHING_ID = "extra_clothing_id";
+    public static final String EXTRA_CLOTHING_NAME = "extra_clothing_name";
+    public static final String EXTRA_CLOTHING_CATEGORY = "extra_clothing_category";
+    public static final String EXTRA_CLOTHING_COLOR = "extra_clothing_color";
+    public static final String EXTRA_CLOTHING_SEASON = "extra_clothing_season";
+    public static final String EXTRA_CLOTHING_DESCRIPTION = "extra_clothing_description";
+    public static final String EXTRA_CLOTHING_IMAGE_URI = "extra_clothing_image_uri";
+
     private ActivityAddClothingBinding binding;
     private DatabaseHelper databaseHelper;
     private String selectedCategory;
     private String selectedSeason;
     private String selectedImageUri = "";
+    private boolean isEditMode = false;
+    private int editClothingId = -1;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickImageLauncher =
             registerForActivityResult(
@@ -42,15 +53,65 @@ public class AddClothingActivity extends AppCompatActivity {
 
         databaseHelper = new DatabaseHelper(this);
 
+        isEditMode = getIntent().getBooleanExtra(EXTRA_EDIT_MODE, false);
+        if (isEditMode) {
+            editClothingId = getIntent().getIntExtra(EXTRA_CLOTHING_ID, -1);
+        }
+
         setupCategorySpinner();
         setupSeasonSpinner();
         setupButtonListeners();
+
+        if (isEditMode) {
+            populateEditFields();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
+    }
+
+    private void populateEditFields() {
+        binding.edittextClothingName.setText(getIntent().getStringExtra(EXTRA_CLOTHING_NAME));
+        binding.edittextColor.setText(getIntent().getStringExtra(EXTRA_CLOTHING_COLOR));
+        binding.edittextDescription.setText(getIntent().getStringExtra(EXTRA_CLOTHING_DESCRIPTION));
+
+        selectedImageUri = getIntent().getStringExtra(EXTRA_CLOTHING_IMAGE_URI);
+        if (selectedImageUri != null && !selectedImageUri.isEmpty() && !"no_path".equals(selectedImageUri)) {
+            try {
+                java.io.File imageFile = new java.io.File(selectedImageUri);
+                if (imageFile.exists()) {
+                    binding.imageClothingPreview.setImageURI(android.net.Uri.fromFile(imageFile));
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        String category = getIntent().getStringExtra(EXTRA_CLOTHING_CATEGORY);
+        String season = getIntent().getStringExtra(EXTRA_CLOTHING_SEASON);
+
+        if (category != null) {
+            selectedCategory = category;
+            android.widget.ArrayAdapter adapter = (android.widget.ArrayAdapter) binding.spinnerCategory.getAdapter();
+            int position = adapter.getPosition(category);
+            if (position >= 0) {
+                binding.spinnerCategory.setSelection(position);
+            }
+        }
+
+        if (season != null) {
+            selectedSeason = season;
+            android.widget.ArrayAdapter adapter = (android.widget.ArrayAdapter) binding.spinnerSeason.getAdapter();
+            int position = adapter.getPosition(season);
+            if (position >= 0) {
+                binding.spinnerSeason.setSelection(position);
+            }
+        }
+
+        binding.buttonSaveClothing.setText("Update Clothing");
     }
 
     private void setupCategorySpinner() {
@@ -133,23 +194,41 @@ public class AddClothingActivity extends AppCompatActivity {
                 return;
             }
 
-            ClothingItem clothingItem = new ClothingItem(
-                    0,
-                    name,
-                    selectedCategory,
-                    selectedImageUri,
-                    selectedSeason,
-                    color,
-                    description
-            );
-
-            boolean success = databaseHelper.insertClothing(clothingItem);
-
-            if (success) {
-                android.widget.Toast.makeText(this, "Clothing item saved", android.widget.Toast.LENGTH_SHORT).show();
-                finish();
+            boolean success;
+            if (isEditMode && editClothingId != -1) {
+                ClothingItem clothingItem = new ClothingItem(
+                        editClothingId,
+                        name,
+                        selectedCategory,
+                        selectedImageUri,
+                        selectedSeason,
+                        color,
+                        description
+                );
+                success = databaseHelper.updateClothing(clothingItem);
+                if (success) {
+                    android.widget.Toast.makeText(this, "Clothing item updated", android.widget.Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    android.widget.Toast.makeText(this, "Failed to update clothing item", android.widget.Toast.LENGTH_SHORT).show();
+                }
             } else {
-                android.widget.Toast.makeText(this, "Failed to save clothing item", android.widget.Toast.LENGTH_SHORT).show();
+                ClothingItem clothingItem = new ClothingItem(
+                        0,
+                        name,
+                        selectedCategory,
+                        selectedImageUri,
+                        selectedSeason,
+                        color,
+                        description
+                );
+                success = databaseHelper.insertClothing(clothingItem);
+                if (success) {
+                    android.widget.Toast.makeText(this, "Clothing item saved", android.widget.Toast.LENGTH_SHORT).show();
+                    finish();
+                } else {
+                    android.widget.Toast.makeText(this, "Failed to save clothing item", android.widget.Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
