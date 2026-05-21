@@ -1,5 +1,7 @@
 package com.example.wardrobeplanner.database;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,15 +12,17 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.example.wardrobeplanner.models.ClothingItem;
 import com.example.wardrobeplanner.models.Outfit;
+import com.example.wardrobeplanner.models.User;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitEntry;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitClothingEntry;
+import com.example.wardrobeplanner.database.DatabaseContract.UserEntry;
 
 // Κάνουμε import το συμβόλαιο που φτιάξαμε πριν
 import com.example.wardrobeplanner.database.DatabaseContract.ClothingEntry;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
     public static final String DATABASE_NAME = "Wardrobe.db";
 
     private static final String SQL_CREATE_OUTFITS =
@@ -46,6 +50,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     ClothingEntry.COLUMN_COLOR + " TEXT," +
                     ClothingEntry.COLUMN_DESCRIPTION + " TEXT)";
 
+    private static final String SQL_CREATE_USERS =
+            "CREATE TABLE " + UserEntry.TABLE_NAME + " (" +
+                    UserEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    UserEntry.COLUMN_USERNAME + " TEXT UNIQUE NOT NULL," +
+                    UserEntry.COLUMN_EMAIL + " TEXT UNIQUE NOT NULL," +
+                    UserEntry.COLUMN_PASSWORD + " TEXT NOT NULL)";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -56,6 +67,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_CREATE_ENTRIES);
         db.execSQL(SQL_CREATE_OUTFITS);
         db.execSQL(SQL_CREATE_OUTFIT_CLOTHING);
+        db.execSQL(SQL_CREATE_USERS);
     }
 
     @Override
@@ -63,6 +75,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + OutfitClothingEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + OutfitEntry.TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + ClothingEntry.TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + UserEntry.TABLE_NAME);
         onCreate(db);
     }
 
@@ -360,4 +373,114 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return item;
     }
 
+    /**
+     * Hash a password using SHA-256
+     */
+    public static String hashPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return password;
+        }
+    }
+
+    /**
+     * Register a new user in the database.
+     * @param username the username
+     * @param email the email
+     * @param password the raw password (will be hashed)
+     * @return true if registration was successful, false otherwise
+     */
+    public boolean registerUser(String username, String email, String password) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(UserEntry.COLUMN_USERNAME, username);
+        values.put(UserEntry.COLUMN_EMAIL, email);
+        values.put(UserEntry.COLUMN_PASSWORD, hashPassword(password));
+
+        long result = db.insert(UserEntry.TABLE_NAME, null, values);
+        return result != -1;
+    }
+
+    /**
+     * Authenticate a user by username/email and password.
+     * @param identifier username or email
+     * @param password raw password
+     * @return the User object if authenticated, null otherwise
+     */
+    public User loginUser(String identifier, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String hashedPassword = hashPassword(password);
+
+        String selection = "(" + UserEntry.COLUMN_USERNAME + " = ? OR " + UserEntry.COLUMN_EMAIL + " = ?) AND " +
+                UserEntry.COLUMN_PASSWORD + " = ?";
+        String[] selectionArgs = { identifier, identifier, hashedPassword };
+
+        Cursor cursor = db.query(
+                UserEntry.TABLE_NAME,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        User user = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            user = new User(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(UserEntry._ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(UserEntry.COLUMN_USERNAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(UserEntry.COLUMN_EMAIL)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(UserEntry.COLUMN_PASSWORD))
+            );
+            cursor.close();
+        }
+
+        return user;
+    }
+
+    /**
+     * Check if a username already exists.
+     * @param username the username to check
+     * @return true if exists, false otherwise
+     */
+    public boolean usernameExists(String username) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = { UserEntry._ID };
+        String selection = UserEntry.COLUMN_USERNAME + " = ?";
+        String[] selectionArgs = { username };
+
+        Cursor cursor = db.query(UserEntry.TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        boolean exists = cursor != null && cursor.getCount() > 0;
+        if (cursor != null) cursor.close();
+        return exists;
+    }
+
+    /**
+     * Check if an email already exists.
+     * @param email the email to check
+     * @return true if exists, false otherwise
+     */
+    public boolean emailExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String[] columns = { UserEntry._ID };
+        String selection = UserEntry.COLUMN_EMAIL + " = ?";
+        String[] selectionArgs = { email };
+
+        Cursor cursor = db.query(UserEntry.TABLE_NAME, columns, selection, selectionArgs, null, null, null);
+        boolean exists = cursor != null && cursor.getCount() > 0;
+        if (cursor != null) cursor.close();
+        return exists;
+    }
 }

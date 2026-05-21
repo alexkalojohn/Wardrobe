@@ -44,4 +44,20 @@
     <string name="error_select_bottom">Select a Bottom item.</string>
     <string name="error_select_shoes">Select a Shoes item.</string>
     <string name="error_empty_outfit_name">Outfit name cannot be empty.</string>
+
+    <!-- Login/Register strings -->
+    <string name="login_subtitle">Σύνδεση</string>
+    <string name="hint_username_or_email">Username ή Email</string>
+    <string name="hint_username">Username</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Κωδικός</string>
+    <string name="hint_confirm_password">Επιβεβαίωση Κωδικού</string>
+    <string name="button_login">Σύνδεση</string>
+    <string name="button_register">Εγγραφή</string>
+    <string name="no_account">Δεν έχεις λογαριασμό;</string>
+    <string name="register_here">Εγγραφή εδώ</string>
+    <string name="have_account">Έχεις ήδη λογαριασμό;</string>
+    <string name="login_here">Σύνδεση εδώ</string>
+    <string name="title_register">Εγγραφή</string>
+    <string name="action_logout">Αποσύνδεση</string>
 </resources>

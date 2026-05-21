@@ -22,10 +22,16 @@ public final class DatabaseContract {
         public static final String COLUMN_OUTFIT_NAME = "outfit_name";
     }
 
-    // Πρόσθεσε αυτό μέσα στην κλάση DatabaseContract
     public static class OutfitClothingEntry implements BaseColumns {
         public static final String TABLE_NAME = "outfit_clothing";
         public static final String COLUMN_OUTFIT_ID = "outfit_id";
         public static final String COLUMN_CLOTHING_ID = "clothing_id";
+    }
+
+    public static class UserEntry implements BaseColumns {
+        public static final String TABLE_NAME = "users";
+        public static final String COLUMN_USERNAME = "username";
+        public static final String COLUMN_EMAIL = "email";
+        public static final String COLUMN_PASSWORD = "password";
     }
 }
