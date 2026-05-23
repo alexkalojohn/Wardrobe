@@ -172,6 +172,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return outfits;
     }
 
+    public Outfit getOutfitById(int outfitId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(
+                OutfitEntry.TABLE_NAME,
+                null,
+                OutfitEntry._ID + " = ?",
+                new String[]{String.valueOf(outfitId)},
+                null,
+                null,
+                null
+        );
+
+        Outfit outfit = null;
+        if (cursor.moveToFirst()) {
+            String outfitName = cursor.getString(cursor.getColumnIndexOrThrow(OutfitEntry.COLUMN_OUTFIT_NAME));
+            outfit = new Outfit(outfitId, outfitName, getClothingItemsForOutfit(outfitId));
+        }
+
+        cursor.close();
+        return outfit;
+    }
+
     public List<ClothingItem> getClothingItemsForOutfit(int outfitId) {
         List<ClothingItem> itemList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -218,6 +240,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     new String[]{String.valueOf(outfitId)}
             );
             db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public boolean updateOutfit(int outfitId, String outfitName, List<Integer> clothingIds) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+
+        try {
+            ContentValues outfitValues = new ContentValues();
+            outfitValues.put(OutfitEntry.COLUMN_OUTFIT_NAME, outfitName);
+
+            int updatedRows = db.update(
+                    OutfitEntry.TABLE_NAME,
+                    outfitValues,
+                    OutfitEntry._ID + " = ?",
+                    new String[]{String.valueOf(outfitId)}
+            );
+
+            if (updatedRows <= 0) {
+                return false;
+            }
+
+            db.delete(
+                    OutfitClothingEntry.TABLE_NAME,
+                    OutfitClothingEntry.COLUMN_OUTFIT_ID + " = ?",
+                    new String[]{String.valueOf(outfitId)}
+            );
+
+            for (Integer clothingId : clothingIds) {
+                ContentValues linkValues = new ContentValues();
+                linkValues.put(OutfitClothingEntry.COLUMN_OUTFIT_ID, outfitId);
+                linkValues.put(OutfitClothingEntry.COLUMN_CLOTHING_ID, clothingId);
+                db.insert(OutfitClothingEntry.TABLE_NAME, null, linkValues);
+            }
+
+            db.setTransactionSuccessful();
+            return true;
         } finally {
             db.endTransaction();
         }

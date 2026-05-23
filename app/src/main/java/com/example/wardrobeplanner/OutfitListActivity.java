@@ -1,6 +1,7 @@
 package com.example.wardrobeplanner;
 
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.View;
 import android.widget.Toast;
 
@@ -29,15 +30,33 @@ public class OutfitListActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         databaseHelper = new DatabaseHelper(this);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
-        outfitAdapter = new OutfitAdapter(outfits, outfit -> {
-            databaseHelper.deleteOutfit(outfit.getId());
-            Toast.makeText(this, "Outfit deleted", Toast.LENGTH_SHORT).show();
-            loadOutfits();
-        });
+        outfitAdapter = new OutfitAdapter(
+                outfits,
+                outfit -> {
+                    Intent intent = new Intent(this, CreateOutfitActivity.class);
+                    intent.putExtra(CreateOutfitActivity.EXTRA_EDIT_MODE, true);
+                    intent.putExtra(CreateOutfitActivity.EXTRA_OUTFIT_ID, outfit.getId());
+                    startActivity(intent);
+                },
+                outfit -> {
+                    databaseHelper.deleteOutfit(outfit.getId());
+                    Toast.makeText(this, "Outfit deleted", Toast.LENGTH_SHORT).show();
+                    loadOutfits();
+                }
+        );
 
         binding.recyclerOutfits.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerOutfits.setAdapter(outfitAdapter);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     @Override

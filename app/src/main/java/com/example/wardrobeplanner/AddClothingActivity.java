@@ -52,6 +52,9 @@ public class AddClothingActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         databaseHelper = new DatabaseHelper(this);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         isEditMode = getIntent().getBooleanExtra(EXTRA_EDIT_MODE, false);
         if (isEditMode) {
@@ -71,6 +74,12 @@ public class AddClothingActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     private void populateEditFields() {

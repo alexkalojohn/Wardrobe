@@ -38,11 +38,14 @@
             android:text="@string/label_top"
             android:textAppearance="?attr/textAppearanceBodyLarge" />
 
-        <Spinner
-            android:id="@+id/spinner_top"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_select_top"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:text="@string/select_top" />
 
         <TextView
             android:layout_width="match_parent"
@@ -51,11 +54,14 @@
             android:text="@string/label_bottom"
             android:textAppearance="?attr/textAppearanceBodyLarge" />
 
-        <Spinner
-            android:id="@+id/spinner_bottom"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_select_bottom"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:text="@string/select_bottom" />
 
         <TextView
             android:layout_width="match_parent"
@@ -64,11 +70,14 @@
             android:text="@string/label_shoes"
             android:textAppearance="?attr/textAppearanceBodyLarge" />
 
-        <Spinner
-            android:id="@+id/spinner_shoes"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_select_shoes"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:text="@string/select_shoes" />
 
         <TextView
             android:id="@+id/text_create_outfit_state"
