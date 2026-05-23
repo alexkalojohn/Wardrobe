@@ -4,15 +4,15 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.wardrobeplanner.database.DatabaseHelper;
 import com.example.wardrobeplanner.databinding.ActivityCreateOutfitBinding;
 import com.example.wardrobeplanner.models.ClothingItem;
+import com.example.wardrobeplanner.models.Outfit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,11 +21,19 @@ import java.util.List;
 
 public class CreateOutfitActivity extends AppCompatActivity {
 
+    public static final String EXTRA_EDIT_MODE = "extra_edit_mode";
+    public static final String EXTRA_OUTFIT_ID = "extra_outfit_id";
+
     private ActivityCreateOutfitBinding binding;
     private DatabaseHelper databaseHelper;
     private List<ClothingItem> topItems = new ArrayList<>();
     private List<ClothingItem> bottomItems = new ArrayList<>();
     private List<ClothingItem> shoesItems = new ArrayList<>();
+    private int selectedTopIndex = -1;
+    private int selectedBottomIndex = -1;
+    private int selectedShoesIndex = -1;
+    private boolean editMode;
+    private int editingOutfitId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +42,14 @@ public class CreateOutfitActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         databaseHelper = new DatabaseHelper(this);
+        editMode = getIntent().getBooleanExtra(EXTRA_EDIT_MODE, false);
+        editingOutfitId = getIntent().getIntExtra(EXTRA_OUTFIT_ID, -1);
+
+        setupBackNavigation();
         setupClothingSpinners();
+        setupSelectionButtons();
         setupSaveButton();
+        loadOutfitForEditing();
         updateFormState();
     }
 
@@ -63,10 +77,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
         sortItemsByName(bottomItems);
         sortItemsByName(shoesItems);
 
-        binding.spinnerTop.setAdapter(createSpinnerAdapter(topItems, getString(R.string.select_top)));
-        binding.spinnerBottom.setAdapter(createSpinnerAdapter(bottomItems, getString(R.string.select_bottom)));
-        binding.spinnerShoes.setAdapter(createSpinnerAdapter(shoesItems, getString(R.string.select_shoes)));
-        setupSpinnerListeners();
+        updateSelectionLabels();
     }
 
     private void sortItemsByName(List<ClothingItem> items) {
@@ -79,25 +90,10 @@ public class CreateOutfitActivity extends AppCompatActivity {
         return value == null ? "" : value;
     }
 
-    private ArrayAdapter<String> createSpinnerAdapter(List<ClothingItem> items, String selectionPrompt) {
-        List<String> labels = new ArrayList<>();
-        labels.add(selectionPrompt);
-        for (ClothingItem item : items) {
-            labels.add(item.getName() + " (" + item.getColor() + ")");
+    private void setupBackNavigation() {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_item,
-                labels
-        ) {
-            @Override
-            public boolean isEnabled(int position) {
-                return position != 0;
-            }
-        };
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        return adapter;
     }
 
     private void setupSaveButton() {
@@ -121,22 +117,67 @@ public class CreateOutfitActivity extends AppCompatActivity {
         binding.buttonSaveOutfit.setOnClickListener(v -> saveOutfit());
     }
 
-    private void setupSpinnerListeners() {
-        AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                updateFormState();
-            }
+    private void setupSelectionButtons() {
+        binding.buttonSelectTop.setOnClickListener(v ->
+                showSelectionDialog(getString(R.string.label_top), topItems, selectedTopIndex, index -> {
+                    selectedTopIndex = index;
+                    updateSelectionLabels();
+                    updateFormState();
+                })
+        );
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                updateFormState();
-            }
-        };
+        binding.buttonSelectBottom.setOnClickListener(v ->
+                showSelectionDialog(getString(R.string.label_bottom), bottomItems, selectedBottomIndex, index -> {
+                    selectedBottomIndex = index;
+                    updateSelectionLabels();
+                    updateFormState();
+                })
+        );
 
-        binding.spinnerTop.setOnItemSelectedListener(listener);
-        binding.spinnerBottom.setOnItemSelectedListener(listener);
-        binding.spinnerShoes.setOnItemSelectedListener(listener);
+        binding.buttonSelectShoes.setOnClickListener(v ->
+                showSelectionDialog(getString(R.string.label_shoes), shoesItems, selectedShoesIndex, index -> {
+                    selectedShoesIndex = index;
+                    updateSelectionLabels();
+                    updateFormState();
+                })
+        );
+    }
+
+    private interface SelectionCallback {
+        void onSelected(int index);
+    }
+
+    private void showSelectionDialog(
+            String title,
+            List<ClothingItem> items,
+            int selectedIndex,
+            SelectionCallback callback
+    ) {
+        if (items.isEmpty()) {
+            Toast.makeText(this, "No " + title + " items available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] labels = new String[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            labels[i] = getItemLabel(items.get(i));
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setSingleChoiceItems(labels, selectedIndex, (dialog, which) -> {
+                    callback.onSelected(which);
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private String getItemLabel(ClothingItem item) {
+        String color = safeText(item.getColor());
+        if (color.isEmpty()) {
+            return item.getName();
+        }
+        return item.getName() + " (" + color + ")";
     }
 
     private void saveOutfit() {
@@ -154,25 +195,35 @@ public class CreateOutfitActivity extends AppCompatActivity {
         }
 
         List<Integer> clothingIds = Arrays.asList(
-                topItems.get(binding.spinnerTop.getSelectedItemPosition() - 1).getId(),
-                bottomItems.get(binding.spinnerBottom.getSelectedItemPosition() - 1).getId(),
-                shoesItems.get(binding.spinnerShoes.getSelectedItemPosition() - 1).getId()
+                topItems.get(selectedTopIndex).getId(),
+                bottomItems.get(selectedBottomIndex).getId(),
+                shoesItems.get(selectedShoesIndex).getId()
         );
+
+        if (editMode) {
+            boolean success = databaseHelper.updateOutfit(editingOutfitId, outfitName, clothingIds);
+            if (!success) {
+                Toast.makeText(this, "Could not update outfit", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(this, "Outfit updated", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         long outfitId = databaseHelper.addOutfit(outfitName, clothingIds);
         if (outfitId == -1) {
             Toast.makeText(this, "Could not save outfit", Toast.LENGTH_SHORT).show();
             return;
         }
-
         Toast.makeText(this, "Outfit saved", Toast.LENGTH_SHORT).show();
         finish();
     }
 
     private boolean hasSelectedAllCategories() {
-        return binding.spinnerTop.getSelectedItemPosition() > 0
-                && binding.spinnerBottom.getSelectedItemPosition() > 0
-                && binding.spinnerShoes.getSelectedItemPosition() > 0;
+        return selectedTopIndex >= 0
+                && selectedBottomIndex >= 0
+                && selectedShoesIndex >= 0;
     }
 
     private boolean hasRequiredCategories() {
@@ -200,19 +251,19 @@ public class CreateOutfitActivity extends AppCompatActivity {
 
         if (topItems.isEmpty()) {
             message.append(getString(R.string.error_missing_top));
-        } else if (binding.spinnerTop.getSelectedItemPosition() == 0) {
+        } else if (selectedTopIndex < 0) {
             message.append(getString(R.string.error_select_top));
         }
 
         if (bottomItems.isEmpty()) {
             appendMissingCategoryMessage(message, getString(R.string.error_missing_bottom));
-        } else if (binding.spinnerBottom.getSelectedItemPosition() == 0) {
+        } else if (selectedBottomIndex < 0) {
             appendMissingCategoryMessage(message, getString(R.string.error_select_bottom));
         }
 
         if (shoesItems.isEmpty()) {
             appendMissingCategoryMessage(message, getString(R.string.error_missing_shoes));
-        } else if (binding.spinnerShoes.getSelectedItemPosition() == 0) {
+        } else if (selectedShoesIndex < 0) {
             appendMissingCategoryMessage(message, getString(R.string.error_select_shoes));
         }
 
@@ -228,6 +279,61 @@ public class CreateOutfitActivity extends AppCompatActivity {
             binding.textCreateOutfitState.setVisibility(View.VISIBLE);
             binding.buttonSaveOutfit.setEnabled(false);
         }
+    }
+
+    private void loadOutfitForEditing() {
+        if (!editMode || editingOutfitId == -1) {
+            return;
+        }
+
+        Outfit outfit = databaseHelper.getOutfitById(editingOutfitId);
+        if (outfit == null) {
+            Toast.makeText(this, "Could not load outfit", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        binding.edittextOutfitName.setText(outfit.getOutfitName());
+        binding.buttonSaveOutfit.setText(R.string.button_save_outfit);
+
+        for (ClothingItem item : outfit.getItems()) {
+            if ("Top".equalsIgnoreCase(item.getCategory())) {
+                selectedTopIndex = findItemIndex(topItems, item.getId());
+            } else if ("Bottom".equalsIgnoreCase(item.getCategory())) {
+                selectedBottomIndex = findItemIndex(bottomItems, item.getId());
+            } else if ("Shoes".equalsIgnoreCase(item.getCategory())) {
+                selectedShoesIndex = findItemIndex(shoesItems, item.getId());
+            }
+        }
+
+        updateSelectionLabels();
+    }
+
+    private int findItemIndex(List<ClothingItem> items, int itemId) {
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i).getId() == itemId) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void updateSelectionLabels() {
+        binding.buttonSelectTop.setText(selectedTopIndex >= 0
+                ? getItemLabel(topItems.get(selectedTopIndex))
+                : getString(R.string.select_top));
+        binding.buttonSelectBottom.setText(selectedBottomIndex >= 0
+                ? getItemLabel(bottomItems.get(selectedBottomIndex))
+                : getString(R.string.select_bottom));
+        binding.buttonSelectShoes.setText(selectedShoesIndex >= 0
+                ? getItemLabel(shoesItems.get(selectedShoesIndex))
+                : getString(R.string.select_shoes));
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 
     private void appendMissingCategoryMessage(StringBuilder message, String nextMessage) {

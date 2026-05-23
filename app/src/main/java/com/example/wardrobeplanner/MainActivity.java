@@ -8,6 +8,7 @@ import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.wardrobeplanner.AboutActivity;
 import com.example.wardrobeplanner.auth.LoginActivity;
 import com.example.wardrobeplanner.databinding.ActivityMainBinding;
 
@@ -48,6 +49,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(MainActivity.this, AboutActivity.class));
+            return true;
+        }
         if (id == R.id.action_logout) {
             logout();
             return true;

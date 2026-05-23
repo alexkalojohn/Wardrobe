@@ -19,11 +19,21 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
         void onDeleteClick(Outfit outfit);
     }
 
+    public interface OnEditClickListener {
+        void onEditClick(Outfit outfit);
+    }
+
     private final List<Outfit> outfits;
     private final OnDeleteClickListener deleteClickListener;
+    private final OnEditClickListener editClickListener;
 
-    public OutfitAdapter(List<Outfit> outfits, OnDeleteClickListener deleteClickListener) {
+    public OutfitAdapter(
+            List<Outfit> outfits,
+            OnEditClickListener editClickListener,
+            OnDeleteClickListener deleteClickListener
+    ) {
         this.outfits = outfits;
+        this.editClickListener = editClickListener;
         this.deleteClickListener = deleteClickListener;
     }
 
@@ -41,7 +51,7 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
     @Override
     public void onBindViewHolder(@NonNull OutfitViewHolder holder, int position) {
         Outfit outfit = outfits.get(position);
-        holder.bind(outfit, deleteClickListener);
+        holder.bind(outfit, editClickListener, deleteClickListener);
     }
 
     @Override
@@ -57,9 +67,18 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
             this.binding = binding;
         }
 
-        void bind(Outfit outfit, OnDeleteClickListener deleteClickListener) {
+        void bind(
+                Outfit outfit,
+                OnEditClickListener editClickListener,
+                OnDeleteClickListener deleteClickListener
+        ) {
             binding.textOutfitName.setText(outfit.getOutfitName());
-            binding.textOutfitItems.setText(buildItemsText(outfit.getItems()));
+            bindItems(outfit.getItems());
+            binding.buttonEditOutfit.setOnClickListener(v -> {
+                if (editClickListener != null) {
+                    editClickListener.onEditClick(outfit);
+                }
+            });
             binding.buttonDeleteOutfit.setOnClickListener(v -> {
                 if (deleteClickListener != null) {
                     deleteClickListener.onDeleteClick(outfit);
@@ -67,24 +86,21 @@ public class OutfitAdapter extends RecyclerView.Adapter<OutfitAdapter.OutfitView
             });
         }
 
-        private String buildItemsText(List<ClothingItem> items) {
-            if (items == null || items.isEmpty()) {
-                binding.textOutfitItems.setVisibility(View.GONE);
-                return "";
-            }
-
-            binding.textOutfitItems.setVisibility(View.VISIBLE);
-
+        private void bindItems(List<ClothingItem> items) {
             ClothingItem top = findItemByCategory(items, "Top");
             ClothingItem bottom = findItemByCategory(items, "Bottom");
             ClothingItem shoes = findItemByCategory(items, "Shoes");
 
-            return "Top: " + getDisplayName(top) + "\n" +
-                    "Bottom: " + getDisplayName(bottom) + "\n" +
-                    "Shoes: " + getDisplayName(shoes);
+            binding.textOutfitTop.setText("Top: " + getDisplayName(top));
+            binding.textOutfitBottom.setText("Bottom: " + getDisplayName(bottom));
+            binding.textOutfitShoes.setText("Shoes: " + getDisplayName(shoes));
         }
 
         private ClothingItem findItemByCategory(List<ClothingItem> items, String category) {
+            if (items == null) {
+                return null;
+            }
+
             for (ClothingItem item : items) {
                 if (category.equalsIgnoreCase(item.getCategory())) {
                     return item;

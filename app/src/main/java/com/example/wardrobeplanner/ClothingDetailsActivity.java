@@ -34,6 +34,9 @@ public class ClothingDetailsActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         databaseHelper = new DatabaseHelper(this);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         clothingId = getIntent().getIntExtra(EXTRA_CLOTHING_ID, -1);
         String name = getIntent().getStringExtra(EXTRA_CLOTHING_NAME);
@@ -101,5 +104,11 @@ public class ClothingDetailsActivity extends AppCompatActivity {
             textView.setText("—");
             textView.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

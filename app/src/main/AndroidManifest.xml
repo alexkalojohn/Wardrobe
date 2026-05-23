@@ -6,15 +6,15 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
-        android:label="My Wardrobe"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/capsule_wardrobe_logo"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/capsule_wardrobe_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
         <activity
             android:name=".auth.LoginActivity"
             android:exported="true"
-            android:label="My Wardrobe"
+            android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,13 +24,19 @@
         </activity>
         <activity
             android:name=".auth.RegisterActivity"
-            android:label="Εγγραφή"
+            android:label="@string/title_register"
             android:theme="@style/Theme.MyApplication.NoActionBar" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="My Wardrobe"
+            android:label="@string/app_name"
             android:theme="@style/Theme.MyApplication.NoActionBar" />
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/about_app_title" />
+        <activity
+            android:name=".ClothingListActivity"
+            android:label="@string/button_view_clothing" />
         <activity
             android:name=".AddClothingActivity"
             android:label="Add Clothing" />

@@ -78,6 +78,7 @@ public class ClothingAdapter extends RecyclerView.Adapter<ClothingAdapter.Clothi
 
     static class ClothingViewHolder extends RecyclerView.ViewHolder {
         private final ImageView imageClothing;
+        private final ImageView imageCategoryIcon;
         private final TextView textName;
         private final TextView textCategory;
         private final TextView textSeason;
@@ -85,6 +86,7 @@ public class ClothingAdapter extends RecyclerView.Adapter<ClothingAdapter.Clothi
         ClothingViewHolder(@NonNull View itemView) {
             super(itemView);
             imageClothing = itemView.findViewById(R.id.image_clothing);
+            imageCategoryIcon = itemView.findViewById(R.id.image_category_icon);
             textName = itemView.findViewById(R.id.text_clothing_name);
             textCategory = itemView.findViewById(R.id.text_clothing_category);
             textSeason = itemView.findViewById(R.id.text_clothing_season);
@@ -93,6 +95,7 @@ public class ClothingAdapter extends RecyclerView.Adapter<ClothingAdapter.Clothi
         void bind(ClothingItem item) {
             textName.setText(item.getName());
             textCategory.setText(item.getCategory());
+            imageCategoryIcon.setImageResource(getCategoryIcon(item.getCategory()));
 
             // Show season if available, otherwise hide the label
             if (item.getSeason() != null && !item.getSeason().isEmpty()) {
@@ -118,6 +121,18 @@ public class ClothingAdapter extends RecyclerView.Adapter<ClothingAdapter.Clothi
             } else {
                 imageClothing.setImageResource(android.R.drawable.ic_menu_gallery);
             }
+        }
+
+        private int getCategoryIcon(String category) {
+            if ("Top".equalsIgnoreCase(category)) {
+                return R.drawable.ic_top;
+            } else if ("Bottom".equalsIgnoreCase(category)) {
+                return R.drawable.ic_bottom;
+            } else if ("Shoes".equalsIgnoreCase(category)) {
+                return R.drawable.ic_shoes;
+            }
+
+            return R.drawable.ic_wardrobe;
         }
     }
 }

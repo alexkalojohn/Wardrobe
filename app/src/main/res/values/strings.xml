@@ -1,17 +1,19 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">My Wardrobe</string>
+    <string name="app_tagline">Organize clothing. Create outfits.</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">My Wardrobe</string>
+    <string name="nav_header_subtitle">Organize clothing. Create outfits.</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">About App</string>
 
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
     <string name="menu_slideshow">Slideshow</string>
 
     <string name="button_add_clothing">Add Clothing</string>
+    <string name="button_view_clothing">View Clothing</string>
     <string name="button_create_outfit">Create Outfit</string>
     <string name="button_view_outfits">View Outfits</string>
     <string name="hint_clothing_name">Clothing Name</string>
@@ -60,4 +62,10 @@
     <string name="login_here">Σύνδεση εδώ</string>
     <string name="title_register">Εγγραφή</string>
     <string name="action_logout">Αποσύνδεση</string>
+    <string name="about_app_title">About App</string>
+    <string name="about_app_description">My Wardrobe is a simple Android application for organizing clothes and creating outfits. Users can save clothing items, group them by category, and combine them into complete outfits.</string>
+    <string name="about_app_how_to_use">How to use the app</string>
+    <string name="about_app_steps">1. Register or log in to your account.\n2. Add clothing items with name, category, season, color, description, and image.\n3. View and manage your saved clothes.\n4. Create outfits by selecting a top, bottom, and shoes.\n5. View or delete your saved outfits.</string>
+    <string name="about_app_team_title">Project Team</string>
+    <string name="about_app_team">Developed by Nikolai Zernov and Alexandros Kalogiannis for the Android Studio Java course project.</string>
 </resources>
