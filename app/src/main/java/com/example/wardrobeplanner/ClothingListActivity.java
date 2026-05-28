@@ -1,6 +1,7 @@
 package com.example.wardrobeplanner;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 
@@ -19,6 +20,9 @@ public class ClothingListActivity extends AppCompatActivity {
     private ActivityClothingListBinding binding;
     private DatabaseHelper databaseHelper;
     private ClothingAdapter adapter;
+
+    private static final String PREFS_NAME = "WardrobePrefs";
+    private static final String KEY_LOGGED_IN_USER_ID = "logged_in_user_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +67,14 @@ public class ClothingListActivity extends AppCompatActivity {
         binding.recyclerClothing.setAdapter(adapter);
     }
 
+    private int getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        return prefs.getInt(KEY_LOGGED_IN_USER_ID, -1);
+    }
+
     private void loadClothingItems() {
-        List<ClothingItem> items = databaseHelper.getAllClothes();
+        int userId = getCurrentUserId();
+        List<ClothingItem> items = databaseHelper.getAllClothes(userId);
         adapter.setItems(items);
         boolean isEmpty = items == null || items.isEmpty();
         binding.recyclerClothing.setVisibility(isEmpty ? View.GONE : View.VISIBLE);

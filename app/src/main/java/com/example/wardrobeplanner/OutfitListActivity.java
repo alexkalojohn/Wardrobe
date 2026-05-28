@@ -1,5 +1,6 @@
 package com.example.wardrobeplanner;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.content.Intent;
 import android.view.View;
@@ -22,6 +23,9 @@ public class OutfitListActivity extends AppCompatActivity {
     private DatabaseHelper databaseHelper;
     private OutfitAdapter outfitAdapter;
     private final List<Outfit> outfits = new ArrayList<>();
+
+    private static final String PREFS_NAME = "WardrobePrefs";
+    private static final String KEY_LOGGED_IN_USER_ID = "logged_in_user_id";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,9 +75,14 @@ public class OutfitListActivity extends AppCompatActivity {
         binding = null;
     }
 
+    private int getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        return prefs.getInt(KEY_LOGGED_IN_USER_ID, -1);
+    }
+
     private void loadOutfits() {
         outfits.clear();
-        outfits.addAll(databaseHelper.getAllOutfits());
+        outfits.addAll(databaseHelper.getAllOutfits(getCurrentUserId()));
         outfitAdapter.notifyDataSetChanged();
         updateEmptyState();
     }

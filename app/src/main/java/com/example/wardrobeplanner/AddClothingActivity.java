@@ -1,5 +1,6 @@
 package com.example.wardrobeplanner;
 
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -33,6 +34,9 @@ public class AddClothingActivity extends AppCompatActivity {
     private String selectedImageUri = "";
     private boolean isEditMode = false;
     private int editClothingId = -1;
+
+    private static final String PREFS_NAME = "WardrobePrefs";
+    private static final String KEY_LOGGED_IN_USER_ID = "logged_in_user_id";
 
     private final ActivityResultLauncher<PickVisualMediaRequest> pickImageLauncher =
             registerForActivityResult(
@@ -169,6 +173,11 @@ public class AddClothingActivity extends AppCompatActivity {
         selectedSeason = seasons[0];
     }
 
+    private int getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        return prefs.getInt(KEY_LOGGED_IN_USER_ID, -1);
+    }
+
     private void setupButtonListeners() {
         binding.buttonSelectImage.setOnClickListener(v -> {
             pickImageLauncher.launch(
@@ -203,6 +212,7 @@ public class AddClothingActivity extends AppCompatActivity {
                 return;
             }
 
+            int userId = getCurrentUserId();
             boolean success;
             if (isEditMode && editClothingId != -1) {
                 ClothingItem clothingItem = new ClothingItem(
@@ -229,7 +239,8 @@ public class AddClothingActivity extends AppCompatActivity {
                         selectedImageUri,
                         selectedSeason,
                         color,
-                        description
+                        description,
+                        userId
                 );
                 success = databaseHelper.insertClothing(clothingItem);
                 if (success) {

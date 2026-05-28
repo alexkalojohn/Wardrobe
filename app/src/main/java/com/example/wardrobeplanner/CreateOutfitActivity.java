@@ -1,5 +1,6 @@
 package com.example.wardrobeplanner;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -26,6 +27,9 @@ public class CreateOutfitActivity extends AppCompatActivity {
 
     private ActivityCreateOutfitBinding binding;
     private DatabaseHelper databaseHelper;
+
+    private static final String PREFS_NAME = "WardrobePrefs";
+    private static final String KEY_LOGGED_IN_USER_ID = "logged_in_user_id";
     private List<ClothingItem> topItems = new ArrayList<>();
     private List<ClothingItem> bottomItems = new ArrayList<>();
     private List<ClothingItem> shoesItems = new ArrayList<>();
@@ -59,8 +63,13 @@ public class CreateOutfitActivity extends AppCompatActivity {
         binding = null;
     }
 
+    private int getCurrentUserId() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        return prefs.getInt(KEY_LOGGED_IN_USER_ID, -1);
+    }
+
     private void setupClothingSpinners() {
-        List<ClothingItem> clothingItems = databaseHelper.getAllClothing();
+        List<ClothingItem> clothingItems = databaseHelper.getAllClothing(getCurrentUserId());
 
         for (ClothingItem item : clothingItems) {
             String category = item.getCategory();
@@ -201,7 +210,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
         );
 
         if (editMode) {
-            boolean success = databaseHelper.updateOutfit(editingOutfitId, outfitName, clothingIds);
+            boolean success = databaseHelper.updateOutfit(editingOutfitId, outfitName, clothingIds, getCurrentUserId());
             if (!success) {
                 Toast.makeText(this, "Could not update outfit", Toast.LENGTH_SHORT).show();
                 return;
@@ -211,7 +220,7 @@ public class CreateOutfitActivity extends AppCompatActivity {
             return;
         }
 
-        long outfitId = databaseHelper.addOutfit(outfitName, clothingIds);
+        long outfitId = databaseHelper.addOutfit(outfitName, clothingIds, getCurrentUserId());
         if (outfitId == -1) {
             Toast.makeText(this, "Could not save outfit", Toast.LENGTH_SHORT).show();
             return;

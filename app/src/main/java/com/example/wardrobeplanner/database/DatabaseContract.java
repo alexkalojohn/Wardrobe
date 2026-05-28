@@ -15,11 +15,13 @@ public final class DatabaseContract {
         public static final String COLUMN_SEASON = "season";
         public static final String COLUMN_COLOR = "color";
         public static final String COLUMN_DESCRIPTION = "description";
+        public static final String COLUMN_USER_ID = "user_id";
     }
 
     public static class OutfitEntry implements BaseColumns {
         public static final String TABLE_NAME = "outfits";
         public static final String COLUMN_OUTFIT_NAME = "outfit_name";
+        public static final String COLUMN_USER_ID = "user_id";
     }
 
     public static class OutfitClothingEntry implements BaseColumns {

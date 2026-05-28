@@ -47,6 +47,11 @@
     <string name="error_select_shoes">Select a Shoes item.</string>
     <string name="error_empty_outfit_name">Outfit name cannot be empty.</string>
 
+    <!-- Validation errors -->
+    <string name="error_email_required">Το email είναι υποχρεωτικό</string>
+    <string name="error_email_invalid">Μη έγκυρη μορφή email (π.χ. user@example.com)</string>
+    <string name="error_email_has_spaces">Το email δεν μπορεί να περιέχει κενά</string>
+
     <!-- Login/Register strings -->
     <string name="login_subtitle">Σύνδεση</string>
     <string name="hint_username_or_email">Username ή Email</string>

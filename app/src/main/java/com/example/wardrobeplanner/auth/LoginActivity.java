@@ -11,6 +11,7 @@ import com.example.wardrobeplanner.MainActivity;
 import com.example.wardrobeplanner.databinding.ActivityLoginBinding;
 import com.example.wardrobeplanner.database.DatabaseHelper;
 import com.example.wardrobeplanner.models.User;
+import com.example.wardrobeplanner.utils.EmailValidator;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -57,6 +58,15 @@ public class LoginActivity extends AppCompatActivity {
         if (password.isEmpty()) {
             binding.editTextPassword.setError("Πληκτρολογήστε κωδικό");
             return;
+        }
+
+        // If identifier looks like an email, validate it
+        if (identifier.contains("@")) {
+            EmailValidator.ValidationResult emailResult = EmailValidator.validateWithAndroidPattern(identifier);
+            if (!emailResult.isValid()) {
+                binding.editTextUsername.setError(emailResult.getErrorMessage());
+                return;
+            }
         }
 
         User user = dbHelper.loginUser(identifier, password);

@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.wardrobeplanner.databinding.ActivityRegisterBinding;
 import com.example.wardrobeplanner.database.DatabaseHelper;
+import com.example.wardrobeplanner.utils.EmailValidator;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -42,8 +43,9 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (email.isEmpty()) {
-            binding.editTextEmail.setError("Το email είναι υποχρεωτικό");
+        EmailValidator.ValidationResult emailResult = EmailValidator.validateWithAndroidPattern(email);
+        if (!emailResult.isValid()) {
+            binding.editTextEmail.setError(emailResult.getErrorMessage());
             return;
         }
 

@@ -16,19 +16,22 @@ import com.example.wardrobeplanner.models.User;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitEntry;
 import com.example.wardrobeplanner.database.DatabaseContract.OutfitClothingEntry;
 import com.example.wardrobeplanner.database.DatabaseContract.UserEntry;
+import com.example.wardrobeplanner.utils.EmailValidator;
 
 // Κάνουμε import το συμβόλαιο που φτιάξαμε πριν
 import com.example.wardrobeplanner.database.DatabaseContract.ClothingEntry;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 5;
     public static final String DATABASE_NAME = "Wardrobe.db";
 
     private static final String SQL_CREATE_OUTFITS =
             "CREATE TABLE " + OutfitEntry.TABLE_NAME + " (" +
                     OutfitEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    OutfitEntry.COLUMN_OUTFIT_NAME + " TEXT)";
+                    OutfitEntry.COLUMN_OUTFIT_NAME + " TEXT," +
+                    OutfitEntry.COLUMN_USER_ID + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + OutfitEntry.COLUMN_USER_ID + ") REFERENCES " + UserEntry.TABLE_NAME + "(" + UserEntry._ID + "))";
 
     private static final String SQL_CREATE_OUTFIT_CLOTHING =
             "CREATE TABLE " + OutfitClothingEntry.TABLE_NAME + " (" +
@@ -48,7 +51,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     ClothingEntry.COLUMN_IMAGE_URI + " TEXT," +
                     ClothingEntry.COLUMN_SEASON + " TEXT," +
                     ClothingEntry.COLUMN_COLOR + " TEXT," +
-                    ClothingEntry.COLUMN_DESCRIPTION + " TEXT)";
+                    ClothingEntry.COLUMN_DESCRIPTION + " TEXT," +
+                    ClothingEntry.COLUMN_USER_ID + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + ClothingEntry.COLUMN_USER_ID + ") REFERENCES " + UserEntry.TABLE_NAME + "(" + UserEntry._ID + "))";
 
     private static final String SQL_CREATE_USERS =
             "CREATE TABLE " + UserEntry.TABLE_NAME + " (" +
@@ -80,7 +85,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public long addClothingItem(String name, String category, String imageUri,
-                                 String season, String color, String description) {
+                                 String season, String color, String description, int userId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -90,16 +95,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(DatabaseContract.ClothingEntry.COLUMN_SEASON, season);
         values.put(DatabaseContract.ClothingEntry.COLUMN_COLOR, color);
         values.put(DatabaseContract.ClothingEntry.COLUMN_DESCRIPTION, description);
+        values.put(DatabaseContract.ClothingEntry.COLUMN_USER_ID, userId);
 
         // Επιστρέφει το ID της γραμμής που δημιουργήθηκε
         return db.insert(DatabaseContract.ClothingEntry.TABLE_NAME, null, values);
     }
 
-    public List<ClothingItem> getAllClothing() {
+    public List<ClothingItem> getAllClothing(int userId) {
         List<ClothingItem> itemList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM " + ClothingEntry.TABLE_NAME, null);
+        Cursor cursor = db.query(
+                ClothingEntry.TABLE_NAME,
+                null,
+                ClothingEntry.COLUMN_USER_ID + " = ?",
+                new String[]{String.valueOf(userId)},
+                null,
+                null,
+                null
+        );
 
         if (cursor.moveToFirst()) {
             do {
@@ -110,7 +124,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_IMAGE_URI)),
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_SEASON)),
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_COLOR)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION))
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_USER_ID))
                 );
                 itemList.add(item);
             } while (cursor.moveToNext());
@@ -119,13 +134,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return itemList;
     }
 
-    public long addOutfit(String outfitName, List<Integer> clothingIds) {
+    public long addOutfit(String outfitName, List<Integer> clothingIds, int userId) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
 
         try {
             ContentValues outfitValues = new ContentValues();
             outfitValues.put(OutfitEntry.COLUMN_OUTFIT_NAME, outfitName);
+            outfitValues.put(OutfitEntry.COLUMN_USER_ID, userId);
 
             long outfitId = db.insert(OutfitEntry.TABLE_NAME, null, outfitValues);
             if (outfitId == -1) {
@@ -146,15 +162,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public List<Outfit> getAllOutfits() {
+    public List<Outfit> getAllOutfits(int userId) {
         List<Outfit> outfits = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.query(
                 OutfitEntry.TABLE_NAME,
                 null,
-                null,
-                null,
+                OutfitEntry.COLUMN_USER_ID + " = ?",
+                new String[]{String.valueOf(userId)},
                 null,
                 null,
                 OutfitEntry._ID + " DESC"
@@ -164,7 +180,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             do {
                 int outfitId = cursor.getInt(cursor.getColumnIndexOrThrow(OutfitEntry._ID));
                 String outfitName = cursor.getString(cursor.getColumnIndexOrThrow(OutfitEntry.COLUMN_OUTFIT_NAME));
-                outfits.add(new Outfit(outfitId, outfitName, getClothingItemsForOutfit(outfitId)));
+                int outfitUserId = cursor.getInt(cursor.getColumnIndexOrThrow(OutfitEntry.COLUMN_USER_ID));
+                outfits.add(new Outfit(outfitId, outfitName, getClothingItemsForOutfit(outfitId), outfitUserId));
             } while (cursor.moveToNext());
         }
 
@@ -245,7 +262,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public boolean updateOutfit(int outfitId, String outfitName, List<Integer> clothingIds) {
+    public boolean updateOutfit(int outfitId, String outfitName, List<Integer> clothingIds, int userId) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
 
@@ -256,8 +273,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             int updatedRows = db.update(
                     OutfitEntry.TABLE_NAME,
                     outfitValues,
-                    OutfitEntry._ID + " = ?",
-                    new String[]{String.valueOf(outfitId)}
+                    OutfitEntry._ID + " = ? AND " + OutfitEntry.COLUMN_USER_ID + " = ?",
+                    new String[]{String.valueOf(outfitId), String.valueOf(userId)}
             );
 
             if (updatedRows <= 0) {
@@ -299,16 +316,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(ClothingEntry.COLUMN_SEASON, clothingItem.getSeason());
         values.put(ClothingEntry.COLUMN_DESCRIPTION, clothingItem.getDescription());
         values.put(ClothingEntry.COLUMN_IMAGE_URI, clothingItem.getImageUri());
+        values.put(ClothingEntry.COLUMN_USER_ID, clothingItem.getUserId());
 
         long result = db.insert(ClothingEntry.TABLE_NAME, null, values);
         return result != -1;
     }
 
     /**
-     * Retrieve all clothing items from the database.
-     * @return list of all ClothingItem objects
+     * Retrieve all clothing items from the database for a specific user.
+     * @param userId the user ID
+     * @return list of all ClothingItem objects for the user
      */
-    public List<ClothingItem> getAllClothes() {
+    public List<ClothingItem> getAllClothes(int userId) {
         List<ClothingItem> clothingList = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -319,14 +338,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 ClothingEntry.COLUMN_COLOR,
                 ClothingEntry.COLUMN_SEASON,
                 ClothingEntry.COLUMN_DESCRIPTION,
-                ClothingEntry.COLUMN_IMAGE_URI
+                ClothingEntry.COLUMN_IMAGE_URI,
+                ClothingEntry.COLUMN_USER_ID
         };
 
         Cursor cursor = db.query(
                 ClothingEntry.TABLE_NAME,
                 projection,
-                null,
-                null,
+                ClothingEntry.COLUMN_USER_ID + " = ?",
+                new String[]{String.valueOf(userId)},
                 null,
                 null,
                 null
@@ -341,7 +361,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_IMAGE_URI)),
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_SEASON)),
                         cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_COLOR)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION))
+                        cursor.getString(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_DESCRIPTION)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ClothingEntry.COLUMN_USER_ID))
                 );
                 clothingList.add(item);
             } while (cursor.moveToNext());
@@ -456,17 +477,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Register a new user in the database.
+     * Performs backend validation on email format.
      * @param username the username
      * @param email the email
      * @param password the raw password (will be hashed)
      * @return true if registration was successful, false otherwise
      */
     public boolean registerUser(String username, String email, String password) {
+        // Backend validation: ensure email is valid before inserting
+        if (email == null || !EmailValidator.isValid(email.trim())) {
+            return false;
+        }
+
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
         values.put(UserEntry.COLUMN_USERNAME, username);
-        values.put(UserEntry.COLUMN_EMAIL, email);
+        values.put(UserEntry.COLUMN_EMAIL, email.trim());
         values.put(UserEntry.COLUMN_PASSWORD, hashPassword(password));
 
         long result = db.insert(UserEntry.TABLE_NAME, null, values);
@@ -475,17 +502,29 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Authenticate a user by username/email and password.
+     * If identifier contains '@', it is validated as an email.
      * @param identifier username or email
      * @param password raw password
      * @return the User object if authenticated, null otherwise
      */
     public User loginUser(String identifier, String password) {
+        if (identifier == null || password == null) {
+            return null;
+        }
+
+        String trimmedIdentifier = identifier.trim();
+
+        // Backend validation: if it looks like an email, validate format
+        if (trimmedIdentifier.contains("@") && !EmailValidator.isValid(trimmedIdentifier)) {
+            return null;
+        }
+
         SQLiteDatabase db = this.getReadableDatabase();
         String hashedPassword = hashPassword(password);
 
         String selection = "(" + UserEntry.COLUMN_USERNAME + " = ? OR " + UserEntry.COLUMN_EMAIL + " = ?) AND " +
                 UserEntry.COLUMN_PASSWORD + " = ?";
-        String[] selectionArgs = { identifier, identifier, hashedPassword };
+        String[] selectionArgs = { trimmedIdentifier, trimmedIdentifier, hashedPassword };
 
         Cursor cursor = db.query(
                 UserEntry.TABLE_NAME,
